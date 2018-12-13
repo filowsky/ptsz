@@ -1,6 +1,6 @@
 class DataLoader:
   # file_path string -> task_set [[_, _, _], [_, _, _]]
-  @static_method
+  @staticmethod
   def call(file_path):
     with open(file_path, "r") as f:
       sets_number = int(f.readline().strip())

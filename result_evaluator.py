@@ -1,9 +1,9 @@
 class ResultEvaluator:
   # task_set [[_, _, _], [_, _, _]] -> total_time integer
   @staticmethod
-  def call(set):
+  def call(set, h):
     total_time = sum(item[0] for item in set)
-    due_date = floor(h * total_time)
+    due_date = int(h * total_time)
     current_time = 0
     total_penelty = 0
     for [len, early, late] in set:

@@ -2,6 +2,11 @@ from data_loader import DataLoader
 from result_evaluator import ResultEvaluator
 
 class SimpleSolver:
+  @staticmethod
+  def call(problem, h_coeff):
+    solver = SimpleSolver()
+    return solver.solve(problem, h_coeff)
+
   def solve(self, problem, h_coeff):
     due_date = self.__compute_due_date(problem, h_coeff)
     #TODO algorithm for scheduling
@@ -33,7 +38,7 @@ class SimpleSolver:
 
     cost = self.__compute_cost(scheduled_tasks, due_date)
     return (cost, scheduled_tasks)
-        
+
 
   def __compute_due_date(self, instance, h_coeff):
     durations = list(map(lambda x: x[0], instance))
@@ -52,9 +57,3 @@ class SimpleSolver:
         return -delay * task[1]
 
     return sum(list(map(lambda t: cost(t), scheduled_tasks)))
-
-
-
-all_instances = DataLoader.call('data/sch10.txt')
-simple_solver = SimpleSolver()
-print(simple_solver.solve(all_instances[0], 0.4))

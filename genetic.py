@@ -1,6 +1,12 @@
 from data_loader import DataLoader
 from result_evaluator import ResultEvaluator
 from simple_solver import SimpleSolver
+from naive import Naive
+from switch_set import SwitchSet
+from full_switch_set import FullSwitchSet
+
+from random import random, choice, randint
+import datetime
 
 def eval_penelty_for_two(item_left, item_right, current_time, due_date):
   penelty = 0
@@ -18,12 +24,10 @@ def generate_strong_population(set, due_date, accept_max, evaluated_results):
   parents = []
 
   for idx in range(len(set) - 1):
-    copy = [[x for x in item] for item in set]
+    copy = [item[:] for item in set]
     pen_without_swap = eval_penelty_for_two(copy[idx], copy[idx+1], current_time, due_date)
     pen_with_swap = eval_penelty_for_two(copy[idx+1], copy[idx], current_time, due_date)
     copy[idx], copy[idx+1] = copy[idx+1], copy[idx]
-
-    # print(len(evaluated_results))
 
     current_time += set[idx][0]
     if copy not in evaluated_results:
@@ -39,7 +43,7 @@ def generate_population(set, due_date, accept_max, evaluated_results):
   parents = []
 
   for idx in range(len(set) - 1):
-    copy = [[x for x in item] for item in set]
+    copy = [item[:] for item in set]
     pen_without_swap = eval_penelty_for_two(copy[idx], copy[idx+1], current_time, due_date)
     pen_with_swap = eval_penelty_for_two(copy[idx+1], copy[idx], current_time, due_date)
     copy[idx], copy[idx+1] = copy[idx+1], copy[idx]
@@ -55,74 +59,116 @@ def generate_population(set, due_date, accept_max, evaluated_results):
 
   return strong_parents, parents
 
-def genetic_iter(set, h, best, accept_factor, mutation_factor, evaluated_results):
-  due_date = int(h * sum([x[0] for x in set]))
-  accept_max = accept_factor * best
+def genetic_iter(strong, medium, weak, due_date, accept_max, evaluated_results):
+  EXIT_STRONG = 150
+  EXIT_MEDIUM = 10
+  EXIT_WEAK = 5
+  EVALUATED_RESULTS_TS_MEDIUM = 1000
+  EVALUATED_RESULTS_TS_WEAK = 500
 
-  strong_parents, parents = generate_population(set, due_date, accept_max, evaluated_results)
-  print(len(strong_parents))
-  print(len(parents))
-  print(len(evaluated_results))
+  strong_new = []
+  medium_new = []
+  weak_new = []
 
-  for item in strong_parents:
-    print(len(strong_parents))
+  for idx, item in enumerate(strong):
     sp, p = generate_population(item, due_date, accept_max, evaluated_results)
-    strong_parents += sp
-    parents += p
+    strong_new += sp
+    medium_new += p
+    strong += sp
+    medium += p
 
-  if len(evaluated_results) > 500:
-    parents = []
+    if idx > EXIT_STRONG:
+      break
 
-  for item in parents:
+  for idx, item in enumerate(medium):
+    sp, p = generate_population(item, due_date, accept_max, evaluated_results)
+    medium_new += sp
+    weak_new += p
+    medium += sp
+    weak += p
+
+    if idx > EXIT_MEDIUM or len(evaluated_results) > EVALUATED_RESULTS_TS_MEDIUM:
+      break
+
+  for idx, item in enumerate(weak):
     sp = generate_strong_population(item, due_date, accept_max, evaluated_results)
-    parents += sp
+    weak += sp
+    weak_new += sp
 
-  last_elements_num = int(len(parents) / 10)
-  strong_parents += parents[-last_elements_num:]  # take 10% of best parents
-  return strong_parents
+    if idx > EXIT_WEAK or len(evaluated_results) > EVALUATED_RESULTS_TS_WEAK:
+      break
 
-def genetic_iter_sp_only(set, h, best, accept_factor, mutation_factor, evaluated_results):
-  due_date = int(h * sum([x[0] for x in set]))
-  accept_max = accept_factor * best
+  return strong_new, medium_new, weak_new
 
-  strong_parents, parents = generate_population(set, due_date, accept_max, evaluated_results)
 
-  for item in strong_parents:
-    sp, _ = generate_population(item, due_date, accept_max, evaluated_results)
-    strong_parents += sp
-    # strong_parents += p
+def genetic(set, due_date, accept_max, n):
+  evaluated_results = []
+  results = []
+  strong, medium, weak = [set], [], []
+  for i in range(n):
+    s, m, w = genetic_iter(strong, medium, weak, due_date, accept_max, evaluated_results)
+    results += strong
+    strong = medium
+    medium = weak
+    weak = []
 
-  return strong_parents
+  return results
 
-ACCEPT_FACTOR = 0.1
-MUTATION_FACTOR = 0.005
-ITER_TRESHHOLD = 100
-Hs = [0.4] #[0.2, 0.4, 0.6, 0.8]
-all_instances = [DataLoader.call('data/sch100.txt')[0]]
+ACCEPT_FACTOR = 0.05
+FILES = [
+  'data/sch20.txt', 'data/sch50.txt',
+  'data/sch100.txt', 'data/sch200.txt', 'data/sch500.txt',
+  'data/sch1000.txt'
+]
+Hs = [0.2, 0.4, 0.6, 0.8]
 
-res_array = []
-for inst in all_instances:
-  inst_array = []
-  for h in Hs:
-    cost, set = SimpleSolver.call(inst, h)
+# FILE = 'data/sch10.txt'
+# all_instances = DataLoader.call(FILE)
+# total_results = []
+# for inst in all_instances:
+#   inst_results = []
+#   for h in Hs:
+#     result = FullSwitchSet.call(inst, h)
+#     inst_results.append(result)
+#   print([x[0] for x in inst_results])
 
-    evaluated_results = [] # used as ref
-    items = [[[field for field in item] for item in set]]
+for file in FILES:
+  all_instances = DataLoader.call(file)
+  res_array = []
+  for idx, inst in enumerate(all_instances):
+    inst_array = []
+    for h in Hs:
+      due_date = int(h * sum([x[0] for x in inst]))
 
-    results = []
-    for item in items:
-      cost = ResultEvaluator.call(item, h)
-      if len(items) > ITER_TRESHHOLD:
-        items += genetic_iter_sp_only(item, h, cost, ACCEPT_FACTOR, MUTATION_FACTOR, evaluated_results)
-      else:
-        items += genetic_iter(item, h, cost, ACCEPT_FACTOR, MUTATION_FACTOR, evaluated_results)
-      results.append((item, cost))
+      #(cost, set) tuple
+      ss = SimpleSolver.call(inst, h)
+      nv = Naive.call(inst, h)
+      results = [
+        ss,
+        nv,
+        SwitchSet.call(ss[1], due_date, 0.01, 5),
+        SwitchSet.call(nv[1], due_date, 0.01, 5),
+      ]
 
-    x = min(results, key = lambda t: t[1])
+      accept_max = ACCEPT_FACTOR * results[0][0]
+      length = len(inst)
 
-    inst_array.append(x[1])
-    print(x[1])
-  res_array.append([x for x in inst_array])
+      n = {
+        20: 5,
+        50: 2,
+        100: 1,
+        200: 0,
+        500: 0,
+        1000: 0
+      }[length]
 
-for x in res_array:
-  print(x)
+      (cost, base) = min(results)
+      for result in genetic(base, due_date, accept_max, n):
+        results.append((ResultEvaluator.call(result, h), result))
+
+      best_set = min(results)[1]
+      best_after_ss = SwitchSet.call(best_set, due_date, 0.05, 5)
+
+
+      inst_array.append(min(results))
+    print([x[0] for x in inst_array])

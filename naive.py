@@ -1,3 +1,4 @@
+from result_evaluator import ResultEvaluator
 class Naive:
   @staticmethod
   def call(set, h):
@@ -12,4 +13,4 @@ class Naive:
       current_time += item[0]
     copy = sorted(copy, key=lambda t: t[0])
     result += copy
-    return result
+    return ResultEvaluator.call(result, h), result

@@ -150,20 +150,20 @@ for file in FILES:
         SwitchSet.call(nv[1], due_date, 0.01, 5),
       ]
 
-      accept_max = ACCEPT_FACTOR * results[0][0]
-      length = len(inst)
 
-      n = {
+      genetic_iter_number = {
         20: 5,
         50: 2,
         100: 1,
         200: 0,
         500: 0,
         1000: 0
-      }[length]
+      }[len(inst)]
 
       (cost, base) = min(results)
-      for result in genetic(base, due_date, accept_max, n):
+      accept_max = ACCEPT_FACTOR * cost
+      genetic_results = genetic(base, due_date, accept_max, genetic_iter_number)
+      for result in genetic_results:
         results.append((ResultEvaluator.call(result, h), result))
 
       best_set = min(results)[1]

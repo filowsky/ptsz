@@ -37,7 +37,7 @@ class SwitchSetGeneric:
                 for perm in permutations(copy[idx:idx+slice_len])
             ])
 
-            copy[idx:idx+slice_len] = best_slice
+            copy[idx:idx+slice_len] = best_slice[1]
             current_time += copy[idx][0]
 
         return copy

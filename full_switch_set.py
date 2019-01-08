@@ -6,9 +6,10 @@ class FullSwitchSet:
   def call(set, h):
     total_time = sum(x[0] for x in set)
     due_date = int(h * total_time)
-    return min([
+    minn = min([
       (FullSwitchSet.eval_result(perm, due_date), perm) for perm in permutations(set)
     ])
+    return minn[0], list(minn[1])
 
   @staticmethod
   def eval_result(set, due_date):

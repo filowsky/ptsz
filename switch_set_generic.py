@@ -7,12 +7,12 @@ class SwitchSetGeneric:
     @staticmethod
     def call(set, due_date, mutation_factor, slice_len, iters):
         if iters == 1:
-            set = SwitchSet.perform_iteration(set, slice_len, due_date, mutation_factor)
+            set = SwitchSetGeneric.perform_iteration(set, slice_len, due_date, mutation_factor)
         else:
             for i in range(iters):
-                set = SwitchSet.perform_iteration(set, slice_len, due_date, mutation_factor)
+                set = SwitchSetGeneric.perform_iteration(set, slice_len, due_date, mutation_factor)
             for i in range(iters):
-                set = SwitchSet.perform_iteration(set, slice_len, due_date, 0)
+                set = SwitchSetGeneric.perform_iteration(set, slice_len, due_date, 0)
 
         return (ResultEvaluator.call_with_dd(set, due_date), set)
 
@@ -28,21 +28,22 @@ class SwitchSetGeneric:
             idx2 = randint(0, len(copy) - 1)
             copy[idx], copy[idx2] = copy[idx2], copy[idx]
 
-        min_cost, best_schedule = SwitchSet.compute_cost(copy, due_date), copy
+        rng = range(len(copy) - slice_len + 1)
+        current_time = 0
 
-        for idx in range(len(best_schedule) - 1):
-            perms = list(permutations(best_schedule[idx:idx+slice_len]))
-            for p in perms:
-                temp = best_schedule[0:idx] + list(p) + best_schedule[idx+slice_len:]
-                cost = SwitchSet.compute_cost(temp, due_date)
-                if cost <= min_cost:
-                    min_cost, best_schedule = cost, temp
+        for idx in rng:
+            best_slice = min([
+                (SwitchSetGeneric.compute_cost(perm, current_time, due_date), perm)
+                for perm in permutations(copy[idx:idx+slice_len])
+            ])
 
-        return best_schedule
+            copy[idx:idx+slice_len] = best_slice
+            current_time += copy[idx][0]
+
+        return copy
 
     @staticmethod
-    def compute_cost(scheduled_tasks, due_date):
-        current_time = 0
+    def compute_cost(scheduled_tasks, due_date, current_time):
         def cost(task):
             nonlocal current_time
             current_time += task[0]

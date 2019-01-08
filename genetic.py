@@ -116,24 +116,16 @@ def genetic(set, due_date, accept_max, n):
 
 ACCEPT_FACTOR = 0.05
 FILES = [
-  'data/sch20.txt', 'data/sch50.txt',
+  'data/sch10.txt', 'data/sch20.txt', 'data/sch50.txt',
   'data/sch100.txt', 'data/sch200.txt', 'data/sch500.txt',
   'data/sch1000.txt'
 ]
-Hs = [0.2, 0.4, 0.6, 0.8]
-
-# FILE = 'data/sch10.txt'
-# all_instances = DataLoader.call(FILE)
-# total_results = []
-# for inst in all_instances:
-#   inst_results = []
-#   for h in Hs:
-#     result = FullSwitchSet.call(inst, h)
-#     inst_results.append(result)
-#   print([x[0] for x in inst_results])
+# Hs = [0.2, 0.4, 0.6, 0.8]
+Hs = [0.4, 0.6]
 
 for file in FILES:
   all_instances = DataLoader.call(file)
+  all_instances = [all_instances[3], all_instances[8]]
   res_array = []
   for idx, inst in enumerate(all_instances):
     inst_array = []
@@ -149,15 +141,17 @@ for file in FILES:
         SwitchSet.call(ss[1], due_date, 0.01, 5),
         SwitchSet.call(nv[1], due_date, 0.01, 5),
       ]
-
+      if len(inst) == 10:
+        results.append(FullSwitchSet.call(inst, h))
 
       genetic_iter_number = {
+        10: 0,
         20: 5,
         50: 2,
         100: 1,
-        200: 0,
-        500: 0,
-        1000: 0
+        200: 1,
+        500: 1,
+        1000: 1
       }[len(inst)]
 
       (cost, base) = min(results)

@@ -33,7 +33,7 @@ class SwitchSetGeneric:
 
         for idx in rng:
             best_slice = min([
-                (SwitchSetGeneric.compute_cost(perm, current_time, due_date), perm)
+                (SwitchSetGeneric.compute_cost(perm, due_date, current_time), perm)
                 for perm in permutations(copy[idx:idx+slice_len])
             ])
 

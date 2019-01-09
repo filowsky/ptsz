@@ -5,7 +5,7 @@ from result_evaluator import ResultEvaluator
 
 class SwitchSetGeneric:
     @staticmethod
-    def call(set, due_date, mutation_factor, slice_len, iters):
+    def call(set, due_date, mutation_factor, iters, slice_len):
         if iters == 1:
             set = SwitchSetGeneric.perform_iteration(set, slice_len, due_date, mutation_factor)
         else:
@@ -44,14 +44,11 @@ class SwitchSetGeneric:
 
     @staticmethod
     def compute_cost(scheduled_tasks, due_date, current_time):
-        def cost(task):
-            nonlocal current_time
-            current_time += task[0]
-            delay = current_time - due_date
-
-            if delay > 0:
-                return delay * task[2]
-            else:
-                return -delay * task[1]
-
-        return sum(list(map(lambda t: cost(t), scheduled_tasks)))
+      total_penelty = 0
+      for [len, early, late] in scheduled_tasks:
+        current_time += len
+        if current_time < due_date:
+          total_penelty += early * (due_date - current_time)
+        else:
+          total_penelty += late * (current_time - due_date)
+      return total_penelty

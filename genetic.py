@@ -4,7 +4,7 @@ from simple_solver import SimpleSolver
 from naive import Naive
 from switch_set import SwitchSet
 from full_switch_set import FullSwitchSet
-
+from switch_set_generic import SwitchSetGeneric
 from random import random, choice, randint
 import datetime
 
@@ -114,7 +114,7 @@ def genetic(set, due_date, accept_max, n):
 
   return results
 
-ACCEPT_FACTOR = 0.05
+ACCEPT_FACTOR = 0.02
 FILES = [
   'data/sch10.txt', 'data/sch20.txt', 'data/sch50.txt',
   'data/sch100.txt', 'data/sch200.txt', 'data/sch500.txt',
@@ -147,11 +147,11 @@ for file in FILES:
       genetic_iter_number = {
         10: 0,
         20: 5,
-        50: 2,
+        50: 1,
         100: 1,
-        200: 1,
-        500: 1,
-        1000: 1
+        200: 0,
+        500: 0,
+        1000: 0
       }[len(inst)]
 
       (cost, base) = min(results)
@@ -161,8 +161,20 @@ for file in FILES:
         results.append((ResultEvaluator.call(result, h), result))
 
       best_set = min(results)[1]
-      best_after_ss = SwitchSet.call(best_set, due_date, 0.05, 5)
-
+      results.append(SwitchSet.call(best_set, due_date, 0, 5)) # no mutations
+      ss_slice_length = {
+        10: 2,
+        20: 6,
+        50: 5,
+        100: 5,
+        200: 5,
+        500: 5,
+        1000: 5
+      }[len(inst)]
+      best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0.02, 5, ss_slice_length)
+      results.append(best_after_generic_ss)
+      best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0, 5, ss_slice_length)
+      results.append(best_after_generic_ss)
 
       inst_array.append(min(results))
     print([x[0] for x in inst_array])

@@ -4,9 +4,13 @@ from simple_solver import SimpleSolver
 from naive import Naive
 from switch_set import SwitchSet
 from full_switch_set import FullSwitchSet
-
+from switch_set_generic import SwitchSetGeneric
 from random import random, choice, randint
 import datetime
+
+import time
+def ctime():
+  return int(round(time.time() * 1000))
 
 def eval_penelty_for_two(item_left, item_right, current_time, due_date):
   penelty = 0
@@ -53,7 +57,7 @@ def generate_population(set, due_date, accept_max, evaluated_results):
       if pen_with_swap < pen_without_swap:
         strong_parents.append(copy)
         evaluated_results.append(copy)
-      elif pen_without_swap - pen_with_swap < accept_max:
+      elif (pen_without_swap - pen_with_swap) < accept_max:
         parents.append(copy)
         evaluated_results.append(copy)
 
@@ -114,7 +118,7 @@ def genetic(set, due_date, accept_max, n):
 
   return results
 
-ACCEPT_FACTOR = 0.05
+ACCEPT_FACTOR = 0.005
 FILES = [
   'data/sch10.txt', 'data/sch20.txt', 'data/sch50.txt',
   'data/sch100.txt', 'data/sch200.txt', 'data/sch500.txt',
@@ -130,39 +134,57 @@ for file in FILES:
   for idx, inst in enumerate(all_instances):
     inst_array = []
     for h in Hs:
-      due_date = int(h * sum([x[0] for x in inst]))
+      t1 = ctime()
+      if(len(inst) == 10 or len(inst) == 20):
+        result = SimpleSolver.call(inst, h)[1]
+        due_date = int(h * sum([x[0] for x in inst]))
+        res = SwitchSetGeneric.call(result, due_date, 0, 5, 7)
+        inst_array.append(res)
+      else:
+        due_date = int(h * sum([x[0] for x in inst]))
 
-      #(cost, set) tuple
-      ss = SimpleSolver.call(inst, h)
-      nv = Naive.call(inst, h)
-      results = [
-        ss,
-        nv,
-        SwitchSet.call(ss[1], due_date, 0.01, 5),
-        SwitchSet.call(nv[1], due_date, 0.01, 5),
-      ]
-      if len(inst) == 10:
-        results.append(FullSwitchSet.call(inst, h))
+        #(cost, set) tuple
+        ss = SimpleSolver.call(inst, h)
+        nv = Naive.call(inst, h)
+        results = [
+          ss,
+          nv,
+          SwitchSet.call(ss[1], due_date, 0.01, 5),
+          SwitchSet.call(nv[1], due_date, 0.01, 5)
+        ]
 
-      genetic_iter_number = {
-        10: 0,
-        20: 5,
-        50: 2,
-        100: 1,
-        200: 1,
-        500: 1,
-        1000: 1
-      }[len(inst)]
+        genetic_iter_number = {
+          10: 0,
+          20: 5,
+          50: 2,
+          100: 1,
+          200: 1,
+          500: 1,
+          1000: 1
+        }[len(inst)]
 
-      (cost, base) = min(results)
-      accept_max = ACCEPT_FACTOR * cost
-      genetic_results = genetic(base, due_date, accept_max, genetic_iter_number)
-      for result in genetic_results:
-        results.append((ResultEvaluator.call(result, h), result))
+        (cost, base) = min(results)
+        accept_max = ACCEPT_FACTOR * cost
+        genetic_results = genetic(base, due_date, accept_max, genetic_iter_number)
+        for result in genetic_results:
+          results.append((ResultEvaluator.call(result, h), result))
 
-      best_set = min(results)[1]
-      best_after_ss = SwitchSet.call(best_set, due_date, 0.05, 5)
-
-
-      inst_array.append(min(results))
+        best_set = min(results)[1]
+        results.append(SwitchSet.call(best_set, due_date, 0, 5)) # no mutations
+        ss_slice_length = {
+          10: 7,
+          20: 6,
+          50: 5,
+          100: 5,
+          200: 5,
+          500: 5,
+          1000: 5
+        }[len(inst)]
+        best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0.02, 5, ss_slice_length)
+        results.append(best_after_generic_ss)
+        best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0, 5, ss_slice_length)
+        results.append(best_after_generic_ss)
+        inst_array.append(min(results))
+      t2 = ctime()
+      print(t2 - t1)
     print([x[0] for x in inst_array])

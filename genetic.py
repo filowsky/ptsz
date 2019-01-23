@@ -7,7 +7,7 @@ from full_switch_set import FullSwitchSet
 from switch_set_generic import SwitchSetGeneric
 from random import random, choice, randint
 import datetime
-
+from result_writer import ResultWriter
 import time
 def ctime():
   return int(round(time.time() * 1000))
@@ -140,6 +140,7 @@ for file in FILES:
         due_date = int(h * sum([x[0] for x in inst]))
         res = SwitchSetGeneric.call(result, due_date, 0, 5, 7)
         inst_array.append(res)
+        minnnn = res
       else:
         due_date = int(h * sum([x[0] for x in inst]))
 
@@ -157,10 +158,10 @@ for file in FILES:
           10: 0,
           20: 5,
           50: 2,
-          100: 1,
-          200: 1,
-          500: 1,
-          1000: 1
+          100: 0,
+          200: 0,
+          500: 0,
+          1000: 0
         }[len(inst)]
 
         (cost, base) = min(results)
@@ -174,17 +175,19 @@ for file in FILES:
         ss_slice_length = {
           10: 7,
           20: 6,
-          50: 5,
-          100: 5,
-          200: 5,
-          500: 5,
-          1000: 5
+          50: 6,
+          100: 6,
+          200: 6,
+          500: 6,
+          1000: 6
         }[len(inst)]
         best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0.02, 5, ss_slice_length)
         results.append(best_after_generic_ss)
         best_after_generic_ss = SwitchSetGeneric.call(best_set, due_date, 0, 5, ss_slice_length)
         results.append(best_after_generic_ss)
-        inst_array.append(min(results))
-      t2 = ctime()
-      print(t2 - t1)
-    print([x[0] for x in inst_array])
+        minnnn = min(results)
+        inst_array.append(minnnn)
+      ResultWriter.call(inst, minnnn, idx, h)
+    # t2 = ctime()
+    # print(t2 - t1)
+    # print([x[0] for x in inst_array])
